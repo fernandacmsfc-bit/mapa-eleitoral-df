@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa Eleitoral — Dr. Gutemberg | DF 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --blue-dark: #1A3A5C;
+    --blue-med: #2E6DA4;
+    --blue-light: #E8F4FB;
+    --red: #C0392B;
+    --orange: #E67E22;
+    --yellow: #B7950B;
+    --green: #1E8449;
+    --gray: #95A5A6;
+    --bg: #F7F9FC;
+    --card: #FFFFFF;
+    --border: #E2E8F0;
+    --text: #1A202C;
+    --text-muted: #718096;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .site-header {
+    background: var(--blue-dark);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .site-header .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-circle {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: #2E6DA4;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #fff;
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+  .brand-text h1 { font-size: 18px; font-weight: 700; color: #fff; }
+  .brand-text p { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .header-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  /* MAIN */
+  .main-wrap { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+
+  /* KPIs */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    border-top: 3px solid var(--blue-med);
+  }
+  .kpi-card.red { border-top-color: var(--red); }
+  .kpi-card.green { border-top-color: var(--green); }
+  .kpi-card.orange { border-top-color: var(--orange); }
+  .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; }
+  .kpi-value { font-size: 28px; font-weight: 700; color: var(--text); }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* TOOLBAR */
+  .toolbar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .toolbar-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .btn-group { display: flex; gap: 4px; }
+  .btn-view {
+    font-size: 12px; font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-view:hover { background: var(--blue-light); color: var(--blue-dark); }
+  .btn-view.active { background: var(--blue-dark); color: #fff; border-color: var(--blue-dark); }
+  .sep { width: 1px; background: var(--border); height: 28px; margin: 0 4px; }
+  select {
+    font-size: 12px; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--card); color: var(--text); cursor: pointer;
+  }
+  .search-wrap { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .search-wrap input {
+    font-size: 12px; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg); color: var(--text); width: 200px;
+  }
+
+  /* GRID */
+  .content-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+
+  /* CHART CARD */
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .chart-card-title {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    margin-bottom: 4px;
+  }
+  .chart-card-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+
+  /* SIDEBAR */
+  .sidebar { display: flex; flex-direction: column; gap: 14px; }
+  .side-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+  }
+  .side-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px;
+  }
+
+  /* LEGEND */
+  .legend { display: flex; flex-direction: column; gap: 8px; }
+  .leg-item { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text); }
+  .leg-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .leg-count { margin-left: auto; font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+  /* DETAIL */
+  .detail-box { background: var(--bg); border-radius: 8px; padding: 14px; }
+  .detail-name { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--blue-dark); }
+  .detail-row {
+    display: flex; justify-content: space-between;
+    font-size: 12px; padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .detail-row:last-of-type { border-bottom: none; }
+  .detail-row span:last-child { font-weight: 600; color: var(--text); }
+  .detail-total { font-size: 13px; font-weight: 700; }
+  .prio-badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px; margin-top: 10px;
+  }
+  .hint { font-size: 11px; color: var(--text-muted); margin-top: 10px; font-style: italic; }
+
+  /* RANKING LIST */
+  .rank-list { max-height: 360px; overflow-y: auto; }
+  .rank-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 6px; border-radius: 6px; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .rank-row:hover { background: var(--blue-light); }
+  .rank-row.active { background: var(--blue-light); }
+  .r-num { width: 22px; font-size: 11px; color: var(--text-muted); font-weight: 600; text-align: right; }
+  .r-name { flex: 1; font-size: 12px; color: var(--text); }
+  .r-bar-wrap { width: 72px; }
+  .r-bar { height: 5px; border-radius: 3px; }
+  .r-val { width: 34px; font-size: 11px; font-weight: 600; text-align: right; color: var(--text); }
+
+  /* MACROREGIOES */
+  .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .macro-item {
+    background: var(--bg); border-radius: 7px; padding: 10px;
+    border-left: 3px solid var(--blue-med);
+  }
+  .macro-name { font-size: 11px; font-weight: 600; color: var(--blue-dark); margin-bottom: 4px; }
+  .macro-num { font-size: 18px; font-weight: 700; color: var(--text); }
+  .macro-sub { font-size: 10px; color: var(--text-muted); }
+
+  /* FOOTER */
+  .footer {
+    text-align: center; padding: 24px;
+    font-size: 11px; color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+  }
+  .footer a { color: var(--blue-med); text-decoration: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .content-grid { grid-template-columns: 1fr; }
+    .site-header { padding: 14px 16px; }
+    .header-badge { display: none; }
+    .search-wrap input { width: 140px; }
+  }
+  @media (max-width: 600px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .macro-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <div class="brand-circle">DG</div>
+    <div class="brand-text">
+      <h1>Dr. Gutemberg Fialho</h1>
+      <p>Presidente do SindMédico-DF · Pré-candidato Deputado Distrital 2026</p>
+    </div>
+  </div>
+  <div class="header-badge">Mapa Eleitoral — DF 2026</div>
+</header>
+
+<div class="main-wrap">
+
+  <div class="kpis">
+    <div class="kpi-card">
+      <div class="kpi-label">Sindicalizados ativos</div>
+      <div class="kpi-value">5.584</div>
+      <div class="kpi-sub">Base SindMédico-DF</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Registros CRM-DF</div>
+      <div class="kpi-value">2.290</div>
+      <div class="kpi-sub">Médicos registrados no DF</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Potencial total de votos</div>
+      <div class="kpi-value">7.874</div>
+      <div class="kpi-sub">Universo eleitoral</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Regiões mapeadas</div>
+      <div class="kpi-value">183</div>
+      <div class="kpi-sub">Bairros / RAs do DF</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <span class="toolbar-label">Visualizar:</span>
+    <div class="btn-group">
+      <button class="btn-view active" id="btn-total" onclick="setView('total')">Total potencial</button>
+      <button class="btn-view" id="btn-sind" onclick="setView('sind')">Sindicalizados</button>
+      <button class="btn-view" id="btn-crm" onclick="setView('crm')">CRM-DF</button>
+    </div>
+    <div class="sep"></div>
+    <select id="filterSelect" onchange="filterRegions(this.value)">
+      <option value="all">Todas as regiões</option>
+      <option value="alta">Alta prioridade (500+)</option>
+      <option value="media-alta">Média-alta (200–499)</option>
+      <option value="media">Média (100–199)</option>
+      <option value="baixa">Baixa-média (50–99)</option>
+    </select>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Buscar região..." oninput="searchRegion(this.value)">
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <div class="chart-card">
+      <div class="chart-card-title" id="chartTitle">Top 20 regiões — potencial total de votos</div>
+      <div class="chart-card-sub">Clique em uma barra para ver detalhes da região</div>
+      <div style="position:relative; height: 580px;"><canvas id="mainChart"></canvas></div>
+    </div>
+
+    <div class="sidebar">
+
+      <!-- MACRORREGIÃO SUMMARY -->
+      <div class="side-card">
+        <div class="side-title">Macrorregiões</div>
+        <div class="macro-grid" id="macroGrid"></div>
+      </div>
+
+      <!-- LEGEND -->
+      <div class="side-card">
+        <div class="side-title">Prioridade eleitoral</div>
+        <div class="legend">
+          <div class="leg-item">
+            <div class="leg-dot" style="background:#C0392B;"></div>
+            <span>Alta prioridade</span>
+            <span style="font-size:10px;color:var(--text-muted);">500+ votos</span>
+            <span class="leg-count" id="cnt-alta"></span>
+          </div>
+          <div class="leg-item">
+            <div class="leg-dot" style="background:#E67E22;"></div>
+            <span>Média-alta</span>
+            <span style="font-size:10px;color:var(--text-muted);">200–499</span>
+            <span class="leg-count" id="cnt-ma"></span>
+          </div>
+          <div class="leg-item">
+            <div class="leg-dot" style="background:#B7950B;"></div>
+            <span>Média</span>
+            <span style="font-size:10px;color:var(--text-muted);">100–199</span>
+            <span class="leg-count" id="cnt-med"></span>
+          </div>
+          <div class="leg-item">
+            <div class="leg-dot" style="background:#1E8449;"></div>
+            <span>Baixa-média</span>
+            <span style="font-size:10px;color:var(--text-muted);">50–99</span>
+            <span class="leg-count" id="cnt-bm"></span>
+          </div>
+          <div class="leg-item">
+            <div class="leg-dot" style="background:#95A5A6;"></div>
+            <span>Baixa</span>
+            <span style="font-size:10px;color:var(--text-muted);">&lt; 50</span>
+            <span class="leg-count" id="cnt-bai"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAIL -->
+      <div class="side-card" id="detailCard" style="display:none;">
+        <div class="side-title">Detalhes da região</div>
+        <div id="detailContent"></div>
+      </div>
+
+      <!-- RANKING -->
+      <div class="side-card">
+        <div class="side-title">Ranking completo</div>
+        <div class="rank-list" id="rankList"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong>Dr. Gutemberg Fialho</strong> — Presidente do SindMédico-DF · Pré-candidato a Deputado Distrital 2026<br>
+  <a href="https://drgutemberg.com.br" target="_blank">drgutemberg.com.br</a> ·
+  <a href="https://www.instagram.com/dr.gutemberg/" target="_blank">@dr.gutemberg</a><br>
+  <span style="margin-top:6px;display:block;">Dados: Base SindMédico-DF + CRM-DF · Uso interno — estratégia eleitoral</span>
+</div>
+
+<script>
+const data = [
+  {name:"Asa Sul", sind:758, crm:377, desl:425},
+  {name:"Asa Norte", sind:657, crm:250, desl:429},
+  {name:"Lago Sul", sind:573, crm:203, desl:237},
+  {name:"Sudoeste", sind:519, crm:98, desl:319},
+  {name:"Lago Norte", sind:362, crm:150, desl:176},
+  {name:"Águas Claras", sind:379, crm:38, desl:245},
+  {name:"Park Way", sind:237, crm:51, desl:89},
+  {name:"Noroeste", sind:178, crm:5, desl:94},
+  {name:"Sobradinho", sind:106, crm:32, desl:43},
+  {name:"Setor Sudoeste", sind:59, crm:72, desl:44},
+  {name:"Taguatinga Norte", sind:88, crm:40, desl:46},
+  {name:"Guará II", sind:89, crm:34, desl:63},
+  {name:"Octogonal", sind:87, crm:10, desl:47},
+  {name:"Jardim Botânico", sind:88, crm:4, desl:23},
+  {name:"Águas Claras Norte", sind:73, crm:7, desl:23},
+  {name:"Taguatinga Sul", sind:58, crm:15, desl:27},
+  {name:"Águas Claras Sul", sind:63, crm:4, desl:25},
+  {name:"Guará", sind:51, crm:9, desl:30},
+  {name:"Taguatinga", sind:36, crm:24, desl:26},
+  {name:"Vicente Pires", sind:44, crm:11, desl:30},
+  {name:"Centro", sind:23, crm:30, desl:23},
+  {name:"Grande Colorado", sind:27, crm:7, desl:14},
+  {name:"Guará I", sind:28, crm:23, desl:17},
+  {name:"Cruzeiro Velho", sind:19, crm:11, desl:10},
+  {name:"Núcleo Bandeirante", sind:18, crm:6, desl:5},
+  {name:"Gama", sind:13, crm:8, desl:16},
+  {name:"Santa Maria", sind:9, crm:3, desl:4},
+  {name:"Samambaia Sul", sind:8, crm:0, desl:5},
+  {name:"Park Sul", sind:21, crm:0, desl:16},
+  {name:"Setor Oeste", sind:13, crm:26, desl:13},
+  {name:"Samambaia Norte", sind:6, crm:2, desl:3},
+  {name:"Recanto das Emas", sind:5, crm:1, desl:3},
+  {name:"Ceilândia", sind:12, crm:4, desl:8},
+  {name:"Planaltina", sind:7, crm:3, desl:5},
+  {name:"Riacho Fundo", sind:4, crm:2, desl:2},
+];
+data.forEach(d => { d.total = d.sind + d.crm; });
+
+const macros = [
+  {name:"Plano Piloto", bairros:["Asa Sul","Asa Norte","Sudoeste","Noroeste","Lago Sul","Lago Norte","Setor Sudoeste","Octogonal","Centro","Cruzeiro Velho","Park Way"]},
+  {name:"Águas Claras / Guará", bairros:["Águas Claras","Águas Claras Norte","Águas Claras Sul","Guará","Guará I","Guará II","Vicente Pires","Park Sul"]},
+  {name:"Taguatinga / Ceilândia", bairros:["Taguatinga","Taguatinga Norte","Taguatinga Sul","Ceilândia"]},
+  {name:"Sobradinho / Planaltina", bairros:["Sobradinho","Grande Colorado","Planaltina"]},
+  {name:"Gama / Santa Maria", bairros:["Gama","Santa Maria","Park Sul"]},
+  {name:"Samambaia / Recanto", bairros:["Samambaia Sul","Samambaia Norte","Recanto das Emas"]},
+];
+
+function getPrioColor(t) {
+  if (t >= 500) return '#C0392B';
+  if (t >= 200) return '#E67E22';
+  if (t >= 100) return '#B7950B';
+  if (t >= 50) return '#1E8449';
+  return '#95A5A6';
+}
+function getPrioInfo(t) {
+  if (t >= 500) return {label:'Alta prioridade', bg:'#FDE8E8', color:'#C0392B'};
+  if (t >= 200) return {label:'Média-alta', bg:'#FDF0E0', color:'#E67E22'};
+  if (t >= 100) return {label:'Média', bg:'#FEF9E7', color:'#B7950B'};
+  if (t >= 50) return {label:'Baixa-média', bg:'#E9F7EF', color:'#1E8449'};
+  return {label:'Baixa', bg:'#F8F9FA', color:'#95A5A6'};
+}
+
+let currentView = 'total', currentFilter = 'all', searchTerm = '', chart;
+
+function getFiltered() {
+  let d = [...data];
+  if (currentFilter === 'alta') d = d.filter(x => x.total >= 500);
+  else if (currentFilter === 'media-alta') d = d.filter(x => x.total >= 200 && x.total < 500);
+  else if (currentFilter === 'media') d = d.filter(x => x.total >= 100 && x.total < 200);
+  else if (currentFilter === 'baixa') d = d.filter(x => x.total >= 50 && x.total < 100);
+  if (searchTerm) d = d.filter(x => x.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  return d.sort((a,b) => b.total - a.total).slice(0,20);
+}
+
+function getVals(d) {
+  if (currentView === 'sind') return d.map(x => x.sind);
+  if (currentView === 'crm') return d.map(x => x.crm);
+  return d.map(x => x.total);
+}
+
+function buildChart() {
+  const filtered = getFiltered();
+  const vals = getVals(filtered);
+  const colors = filtered.map(x => getPrioColor(x.total));
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('mainChart'), {
+    type: 'bar',
+    data: {
+      labels: filtered.map(x => x.name),
+      datasets: [{
+        data: vals,
+        backgroundColor: colors.map(c => c + 'CC'),
+        borderColor: colors,
+        borderWidth: 1.5,
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = filtered[ctx.dataIndex];
+              return [` Potencial total: ${d.total}`, ` Sindicalizados: ${d.sind}`, ` CRM-DF: ${d.crm}`];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#E2E8F040' }, ticks: { font: { size: 11 }, color: '#718096' } },
+        y: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#2D3748' } }
+      },
+      onClick: (e, els) => { if (els.length) showDetail(filtered[els[0].index]); }
+    }
+  });
+}
+
+function showDetail(d) {
+  const p = getPrioInfo(d.total);
+  const pctAct = Math.round(d.sind / (d.sind + d.desl) * 100);
+  const card = document.getElementById('detailCard');
+  card.style.display = 'block';
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-box">
+      <div class="detail-name">${d.name}</div>
+      <div class="detail-row"><span>Sindicalizados ativos</span><span>${d.sind}</span></div>
+      <div class="detail-row"><span>Sindicalizados desligados</span><span>${d.desl}</span></div>
+      <div class="detail-row"><span>Registros CRM-DF</span><span>${d.crm}</span></div>
+      <div class="detail-row detail-total" style="border-top: 2px solid var(--border); margin-top:4px; padding-top:8px;">
+        <span>Potencial total</span><span>${d.total}</span>
+      </div>
+      <div class="detail-row"><span>% ativos no sindicato</span><span>${pctAct}%</span></div>
+      <span class="prio-badge" style="background:${p.bg};color:${p.color};">${p.label}</span>
+    </div>`;
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function buildRanking() {
+  const sorted = [...data].sort((a,b) => b.total - a.total);
+  const max = sorted[0].total;
+  document.getElementById('rankList').innerHTML = sorted.map((d,i) => {
+    const pct = Math.round(d.total / max * 100);
+    const col = getPrioColor(d.total);
+    return `<div class="rank-row" onclick='showDetail(${JSON.stringify(d)})'>
+      <span class="r-num">${i+1}</span>
+      <span class="r-name">${d.name}</span>
+      <div class="r-bar-wrap"><div class="r-bar" style="width:${pct}%;background:${col};"></div></div>
+      <span class="r-val">${d.total}</span>
+    </div>`;
+  }).join('');
+}
+
+function buildMacros() {
+  document.getElementById('macroGrid').innerHTML = macros.map(m => {
+    const total = data.filter(d => m.bairros.includes(d.name)).reduce((s,d) => s+d.total, 0);
+    return `<div class="macro-item">
+      <div class="macro-name">${m.name}</div>
+      <div class="macro-num">${total.toLocaleString('pt-BR')}</div>
+      <div class="macro-sub">votos potenciais</div>
+    </div>`;
+  }).join('');
+}
+
+function buildLegendCounts() {
+  document.getElementById('cnt-alta').textContent = data.filter(d => d.total >= 500).length + ' regiões';
+  document.getElementById('cnt-ma').textContent = data.filter(d => d.total >= 200 && d.total < 500).length + ' regiões';
+  document.getElementById('cnt-med').textContent = data.filter(d => d.total >= 100 && d.total < 200).length + ' regiões';
+  document.getElementById('cnt-bm').textContent = data.filter(d => d.total >= 50 && d.total < 100).length + ' regiões';
+  document.getElementById('cnt-bai').textContent = data.filter(d => d.total < 50).length + ' regiões';
+}
+
+function setView(v) {
+  currentView = v;
+  ['total','sind','crm'].forEach(x => document.getElementById('btn-'+x).classList.remove('active'));
+  document.getElementById('btn-'+v).classList.add('active');
+  const titles = {
+    total: 'Top 20 regiões — potencial total de votos',
+    sind: 'Top 20 regiões — sindicalizados ativos',
+    crm: 'Top 20 regiões — registros CRM-DF'
+  };
+  document.getElementById('chartTitle').textContent = titles[v];
+  buildChart();
+}
+
+function filterRegions(val) { currentFilter = val; buildChart(); }
+function searchRegion(val) { searchTerm = val; buildChart(); }
+
+buildChart();
+buildRanking();
+buildMacros();
+buildLegendCounts();
+</script>
+</body>
+</html>
